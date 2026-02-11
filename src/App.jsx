@@ -1279,15 +1279,27 @@ return {
                         </ResponsiveContainer>
                     </div>
                     <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between text-xs text-slate-500">
-                       <span>Revenue: <span className="font-semibold text-slate-800">{formatCurrency(periodMetrics.totalEarnings)}</span></span>
-                       <span>Costs+Tax: <span className="font-semibold text-red-600">{formatCurrency(
-  (includePersonalFuel
-    ? periodMetrics.estBusinessFuelCost + periodMetrics.estPersonalFuelCost
-    : periodMetrics.estBusinessFuelCost)
-  + periodMetrics.totalOtherExpenses
-  + (includeTax ? periodMetrics.estimatedTax : 0)
-)}</span></span>
-                    </div>
+  <span>
+    Revenue:{' '}
+    <span className="font-semibold text-slate-800">
+      {formatCurrency(periodMetrics.totalEarnings)}
+    </span>
+  </span>
+
+  <span>
+    Costs+Tax:{' '}
+    <span className="font-semibold text-red-600">
+      {formatCurrency(
+        (includePersonalFuel
+          ? periodMetrics.estBusinessFuelCost +
+            periodMetrics.estPersonalFuelCost
+          : periodMetrics.estBusinessFuelCost) +
+          periodMetrics.totalOtherExpenses +
+          (includeTax ? periodMetrics.estimatedTax : 0)
+      )}
+    </span>
+  </span>
+</div>
                  </Card>
              ) : (
                 <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-400 text-sm">
