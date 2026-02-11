@@ -924,9 +924,11 @@ return {
   };
 
   const AnalyticsView = () => {
+	  
     // Mode State: 'day', 'week', 'month', 'year'
     const [viewMode, setViewMode] = useState('month');
     const [currentDate, setCurrentDate] = useState(new Date());
+	const [includeExternalExpenses, setIncludeExternalExpenses] = useState(true);
 
     // -- Date Navigation Logic --
     const navigateDate = (direction) => {
@@ -1022,7 +1024,14 @@ return {
         
         const estBusinessFuelCost = businessKm * globalMetrics.avgCostPerKm;
         const estPersonalFuelCost = personalKm * globalMetrics.avgCostPerKm;
-        const totalOtherExpenses = filteredData.expenses.reduce((acc, e) => acc + e.cost, 0);
+        const totalOtherExpensesRaw = filteredData.expenses.reduce(
+  (acc, e) => acc + e.cost,
+  0
+);
+
+const totalOtherExpenses = includeExternalExpenses
+  ? totalOtherExpensesRaw
+  : 0;
         
         const netProfitBeforeTax = totalEarnings - estBusinessFuelCost - totalOtherExpenses;
         const estimatedTax = netProfitBeforeTax > 0 ? netProfitBeforeTax * (settings.taxRate / 100) : 0;
@@ -1052,7 +1061,12 @@ return {
   totalDuration,
   profitPerKm
 };
-    }, [filteredData, globalMetrics.avgCostPerKm, settings.taxRate]);
+    }, [
+  filteredData,
+  globalMetrics.avgCostPerKm,
+  settings.taxRate,
+  includeExternalExpenses
+]);
 
     // -- Chart Data --
     const earningsByPlatform = filteredData.trips
@@ -1095,9 +1109,30 @@ return {
 
     return (
       <div className="p-4 max-w-lg mx-auto pb-24 h-full overflow-y-auto">
-        <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-          <BarChart3 className="text-indigo-600" /> Analytics
-        </h2>
+        <div className="mb-6">
+  <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2 mb-4">
+    <BarChart3 className="text-indigo-600" /> Analytics
+  </h2>
+
+  <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+    <span className="text-sm text-slate-600">
+      Include External Expenses
+    </span>
+
+    <button
+      onClick={() => setIncludeExternalExpenses(prev => !prev)}
+      className={`w-12 h-6 flex items-center rounded-full p-1 transition-all ${
+        includeExternalExpenses ? 'bg-indigo-600' : 'bg-slate-300'
+      }`}
+    >
+      <div
+        className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-all ${
+          includeExternalExpenses ? 'translate-x-6' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  </div>
+</div>
 
         {/* Date Navigation Bar */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2 mb-6">
