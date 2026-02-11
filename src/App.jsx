@@ -1093,9 +1093,7 @@ return {
   filteredData,
   globalMetrics.avgCostPerKm,
   settings.taxRate,
-  includeExternalExpenses,
-  includeTax,
-  includePersonalFuel
+  includeExternalExpenses
 ]);
 
     // -- Chart Data --
@@ -1285,7 +1283,8 @@ return {
     ? periodMetrics.estBusinessFuelCost + periodMetrics.estPersonalFuelCost
     : periodMetrics.estBusinessFuelCost)
   + periodMetrics.totalOtherExpenses
-  + (includeTax ? periodMetrics.estimatedTax : 0)}</span></span>
+  + (includeTax ? periodMetrics.estimatedTax : 0)
+)}</span></span>
                     </div>
                  </Card>
              ) : (
