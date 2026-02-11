@@ -110,7 +110,11 @@ export default function App() {
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('gigtrack_settings');
-    return saved ? JSON.parse(saved) : { taxRate: 15, weeklyGoal: 500 };
+    return saved ? JSON.parse(saved) : { 
+  taxRate: 15, 
+  weeklyGoal: 500,
+  currency: 'AUD'
+};
   });
 
   const [fuelLogs, setFuelLogs] = useState(() => {
@@ -162,17 +166,24 @@ export default function App() {
     let isEstimate = false;
 
     if (sortedFuel.length > 1) {
-      const maxOdo = sortedFuel[0].odometer;
-      const minOdo = sortedFuel[sortedFuel.length - 1].odometer;
-      totalDist = maxOdo - minOdo;
-      
-      const relevantLogs = sortedFuel.slice(0, sortedFuel.length - 1);
-      totalFuelCost = relevantLogs.reduce((acc, curr) => acc + curr.totalPrice, 0);
-      totalLitres = relevantLogs.reduce((acc, curr) => acc + curr.litres, 0);
-      
-      avgCostPerKm = totalDist > 0 ? (totalFuelCost / totalDist) : 0;
-      avgEfficiency = totalLitres > 0 ? (totalDist / totalLitres) : 0;
-    } else if (sortedFuel.length === 1) {
+  for (let i = 0; i < sortedFuel.length - 1; i++) {
+    const current = sortedFuel[i];
+    const previous = sortedFuel[i + 1];
+
+    if (current.fullTank && previous.fullTank) {
+      const dist = current.odometer - previous.odometer;
+
+      if (dist > 0) {
+        totalDist += dist;
+        totalFuelCost += current.totalPrice;
+        totalLitres += current.litres;
+      }
+    }
+  }
+
+  avgCostPerKm = totalDist > 0 ? totalFuelCost / totalDist : 0;
+  avgEfficiency = totalLitres > 0 ? totalDist / totalLitres : 0;
+} else if (sortedFuel.length === 1) {
         const log = sortedFuel[0];
         avgEfficiency = 10; // Fallback estimate
         avgCostPerKm = log.price / avgEfficiency;
@@ -198,6 +209,10 @@ export default function App() {
   };
 
   const handleAddFuel = (entry) => {
+	  if (car && entry.odometer <= car.odometer) {
+  alert("Odometer must be higher than previous reading");
+  return;
+}
     const newEntry = { ...entry, id: Date.now(), totalPrice: entry.litres * entry.price };
     setFuelLogs(prev => [newEntry, ...prev]);
     if (car && entry.odometer > car.odometer) {
@@ -265,7 +280,11 @@ export default function App() {
   };
 
   // -- Render Helpers --
-  const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+  const formatCurrency = (val) =>
+  new Intl.NumberFormat('en-AU', {
+    style: 'currency',
+    currency: settings.currency || 'AUD'
+  }).format(val);
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
   // -- Views --
@@ -459,19 +478,21 @@ export default function App() {
     const [isAdding, setIsAdding] = useState(false);
     const [formData, setFormData] = useState({
       date: new Date().toISOString().split('T')[0],
-      odometer: car?.odometer || '',
-      litres: '',
-      price: ''
+  odometer: car?.odometer || '',
+  litres: '',
+  price: '',
+  fullTank: true
     });
 
     const handleSubmit = (e) => {
       e.preventDefault();
       handleAddFuel({
-        date: formData.date,
-        odometer: Number(formData.odometer),
-        litres: Number(formData.litres),
-        price: Number(formData.price)
-      });
+  date: formData.date,
+  odometer: Number(formData.odometer),
+  litres: Number(formData.litres),
+  price: Number(formData.price),
+  fullTank: formData.fullTank
+});
       setIsAdding(false);
       setFormData({ date: new Date().toISOString().split('T')[0], odometer: '', litres: '', price: '' });
     };
@@ -504,6 +525,14 @@ export default function App() {
               <Input label="Litres" type="number" step="0.01" value={formData.litres} onChange={e => setFormData({...formData, litres: e.target.value})} required />
               <Input label="Price / Litre" type="number" step="0.001" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required />
             </div>
+			<div className="flex items-center gap-2 mb-4">
+  <input
+    type="checkbox"
+    checked={formData.fullTank}
+    onChange={e => setFormData({...formData, fullTank: e.target.checked})}
+  />
+  <label className="text-sm text-slate-600">Full Tank Fill</label>
+</div>
             <div className="flex items-center justify-between text-sm text-slate-500 bg-orange-50 p-3 rounded-lg mb-4">
                <span>Total Cost:</span>
                <span className="font-bold text-orange-700">
@@ -524,11 +553,12 @@ export default function App() {
           ) : (
             globalMetrics.sortedFuel.map((log, idx) => {
               const prevLog = globalMetrics.sortedFuel[idx + 1];
-              let efficiency = null;
-              if (prevLog) {
-                const dist = log.odometer - prevLog.odometer;
-                efficiency = dist / log.litres;
-              }
+let efficiency = null;
+
+if (prevLog && log.fullTank && prevLog.fullTank) {
+  const dist = log.odometer - prevLog.odometer;
+  efficiency = dist > 0 ? dist / log.litres : null;
+}
 
               return (
                 <Card key={log.id} className="p-4 flex justify-between items-center group">
@@ -709,17 +739,34 @@ export default function App() {
     // Calculate Week Progress
     const weekProgress = useMemo(() => {
        const today = new Date();
-       const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
-       const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust to Monday start
-       const startOfWeek = new Date(today.setDate(diff));
-       startOfWeek.setHours(0,0,0,0);
+const dayOfWeek = today.getDay();
+const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+
+const startOfWeek = new Date(today);
+startOfWeek.setDate(diff);
+startOfWeek.setHours(0,0,0,0);
        
        const weekEarnings = tripLogs
         .filter(t => new Date(t.date) >= startOfWeek && t.type === 'Business')
         .reduce((acc, t) => acc + (t.earnings || 0), 0);
         
        const percent = Math.min(100, (weekEarnings / settings.weeklyGoal) * 100);
-       return { current: weekEarnings, percent };
+      const weekBusinessKm = tripLogs
+  .filter(t => new Date(t.date) >= startOfWeek && t.type === 'Business')
+  .reduce((acc, t) => acc + t.km, 0);
+
+const weekEstimatedFuel = weekBusinessKm * globalMetrics.avgCostPerKm;
+const weekNet = weekEarnings - weekEstimatedFuel;
+
+const weekProfitPerKm = weekBusinessKm > 0 
+  ? weekNet / weekBusinessKm 
+  : 0;
+
+return { 
+  current: weekEarnings, 
+  percent,
+  weekProfitPerKm
+};
     }, [tripLogs, settings.weeklyGoal]);
 
     const enrichedTrips = tripLogs
@@ -747,6 +794,15 @@ export default function App() {
            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
               <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000" style={{ width: `${weekProgress.percent}%` }}></div>
            </div>
+		   <div className="mt-4 pt-3 border-t border-slate-100">
+  <div className="flex justify-between text-sm">
+    <span className="text-slate-500">Weekly Profit / KM</span>
+    <span className="font-bold text-indigo-600">
+      {formatCurrency(weekProgress.weekProfitPerKm)} / km
+    </span>
+  </div>
+</div>
+
         </div>
 
         <div className="flex justify-between items-center mb-4">
@@ -976,21 +1032,26 @@ export default function App() {
         const totalLitres = filteredData.fuel.reduce((acc, f) => acc + f.litres, 0);
         const hourlyRate = totalDuration > 0 ? totalEarnings / totalDuration : 0;
 
-        return { 
-          totalEarnings, 
-          netProfitBeforeTax,
-          netProfitAfterTax,
-          estimatedTax,
-          estBusinessFuelCost, 
-          estPersonalFuelCost, 
-          totalOtherExpenses,
-          actualFuelSpend,
-          totalLitres,
-          businessKm,
-          personalKm,
-          hourlyRate,
-          totalDuration
-        };
+        const profitPerKm = businessKm > 0 
+  ? netProfitAfterTax / businessKm 
+  : 0;
+
+return { 
+  totalEarnings, 
+  netProfitBeforeTax,
+  netProfitAfterTax,
+  estimatedTax,
+  estBusinessFuelCost, 
+  estPersonalFuelCost, 
+  totalOtherExpenses,
+  actualFuelSpend,
+  totalLitres,
+  businessKm,
+  personalKm,
+  hourlyRate,
+  totalDuration,
+  profitPerKm
+};
     }, [filteredData, globalMetrics.avgCostPerKm, settings.taxRate]);
 
     // -- Chart Data --
@@ -1060,21 +1121,30 @@ export default function App() {
 
         {/* Top Cards */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-            <Card className="p-4 bg-emerald-50 border-emerald-100">
-                <p className="text-emerald-600 text-xs font-bold uppercase">Net (After Tax)</p>
-                <p className="text-2xl font-bold text-emerald-800 mt-1">{formatCurrency(periodMetrics.netProfitAfterTax)}</p>
-                {periodMetrics.estimatedTax > 0 && (
-                  <p className="text-[10px] text-emerald-600/70 mt-1">Tax withheld: {formatCurrency(periodMetrics.estimatedTax)}</p>
-                )}
-            </Card>
-            <Card className="p-4 bg-purple-50 border-purple-100">
-                <p className="text-purple-600 text-xs font-bold uppercase">Hourly Rate</p>
-                <div className="flex items-baseline gap-1 mt-1">
-                  <p className="text-2xl font-bold text-purple-800">{formatCurrency(periodMetrics.hourlyRate)}</p>
-                  <span className="text-sm text-purple-600">/hr</span>
-                </div>
-            </Card>
-        </div>
+  <Card className="p-4 bg-emerald-50 border-emerald-100">
+    <p className="text-emerald-600 text-xs font-bold uppercase">Net (After Tax)</p>
+    <p className="text-2xl font-bold text-emerald-800 mt-1">
+      {formatCurrency(periodMetrics.netProfitAfterTax)}
+    </p>
+  </Card>
+
+  <Card className="p-4 bg-purple-50 border-purple-100">
+    <p className="text-purple-600 text-xs font-bold uppercase">Hourly Rate</p>
+    <p className="text-2xl font-bold text-purple-800 mt-1">
+      {formatCurrency(periodMetrics.hourlyRate)}/hr
+    </p>
+  </Card>
+
+  <Card className="p-4 bg-blue-50 border-blue-100 col-span-2">
+    <p className="text-blue-600 text-xs font-bold uppercase">Profit Per KM</p>
+    <p className="text-2xl font-bold text-blue-800 mt-1">
+      {formatCurrency(periodMetrics.profitPerKm)} / km
+    </p>
+    <p className="text-xs text-blue-600/70 mt-1">
+      Based on {periodMetrics.businessKm.toFixed(0)} business km
+    </p>
+  </Card>
+</div>
 
         {/* Financial Breakdown */}
         <div className="mb-6">
