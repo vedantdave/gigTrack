@@ -1134,7 +1134,7 @@ return {
         { name: 'Pers. Fuel', value: periodMetrics.estPersonalFuelCost, fill: '#94a3b8' },
         { name: 'Expenses', value: periodMetrics.totalOtherExpenses, fill: '#f59e0b' },
         { name: 'Est. Tax', value: periodMetrics.estimatedTax, fill: '#d946ef' },
-        { name: 'Net Profit', value: periodMetrics.netFinal, fill: '#10b981' },,
+        { name: 'Net Profit', value: periodMetrics.netFinal, fill: '#10b981' },
     ];
 
     return (
