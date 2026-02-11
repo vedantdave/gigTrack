@@ -1352,10 +1352,11 @@ return {
              </Card>
           </div>
         )}
+		  </div> 
       </div>
     );
   };
-
+  
   const NavItem = ({ id, icon: Icon, label }) => (
     <button 
       onClick={() => setActiveTab(id)} 
