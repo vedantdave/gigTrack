@@ -1145,7 +1145,26 @@ return {
   </h2>
 
   <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-  <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 shadow-sm mt-3">
+  <span className="text-sm text-slate-600">
+    Include External Expenses
+  </span>
+
+  <button
+    onClick={() => setIncludeExternalExpenses(prev => !prev)}
+    className={`w-12 h-6 flex items-center rounded-full p-1 transition-all ${
+      includeExternalExpenses ? 'bg-indigo-600' : 'bg-slate-300'
+    }`}
+  >
+    <div
+      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-all ${
+        includeExternalExpenses ? 'translate-x-6' : 'translate-x-0'
+      }`}
+    />
+  </button>
+</div>
+
+{/* Include Tax */}
+<div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 shadow-sm mt-3">
   <span className="text-sm text-slate-600">
     Include Tax in Calculations
   </span>
@@ -1163,6 +1182,8 @@ return {
     />
   </button>
 </div>
+
+{/* Include Personal Fuel */}
 <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 shadow-sm mt-3">
   <span className="text-sm text-slate-600">
     Include Personal Fuel
@@ -1171,7 +1192,7 @@ return {
   <button
     onClick={() => setIncludePersonalFuel(prev => !prev)}
     className={`w-12 h-6 flex items-center rounded-full p-1 transition-all ${
-      includePersonalFuel ? 'bg-indigo-600' : 'bg-slate-300'
+        includePersonalFuel ? 'bg-indigo-600' : 'bg-slate-300'
     }`}
   >
     <div
@@ -1180,24 +1201,6 @@ return {
       }`}
     />
   </button>
-</div>
-    <span className="text-sm text-slate-600">
-      Include External Expenses
-    </span>
-
-    <button
-      onClick={() => setIncludeExternalExpenses(prev => !prev)}
-      className={`w-12 h-6 flex items-center rounded-full p-1 transition-all ${
-        includeExternalExpenses ? 'bg-indigo-600' : 'bg-slate-300'
-      }`}
-    >
-      <div
-        className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-all ${
-          includeExternalExpenses ? 'translate-x-6' : 'translate-x-0'
-        }`}
-      />
-    </button>
-  </div>
 </div>
 
         {/* Date Navigation Bar */}
