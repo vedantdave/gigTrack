@@ -181,8 +181,18 @@ export default function App() {
     }
   }
 
-  avgCostPerKm = totalDist > 0 ? totalFuelCost / totalDist : 0;
+  if (totalDist > 0) {
+  avgCostPerKm = totalFuelCost / totalDist;
   avgEfficiency = totalLitres > 0 ? totalDist / totalLitres : 0;
+} else if (sortedFuel.length > 0) {
+  // Fallback estimate when not enough full tanks
+  const latest = sortedFuel[0];
+
+  const fallbackEfficiency = 10; // km per litre (safe average)
+  avgEfficiency = fallbackEfficiency;
+  avgCostPerKm = latest.price / fallbackEfficiency;
+  isEstimate = true;
+}
 } else if (sortedFuel.length === 1) {
         const log = sortedFuel[0];
         avgEfficiency = 10; // Fallback estimate
