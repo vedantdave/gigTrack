@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional: Add some padding for mobile safety on iOS */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
