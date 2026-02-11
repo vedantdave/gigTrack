@@ -939,6 +939,7 @@ return {
     const [viewMode, setViewMode] = useState('month');
     const [currentDate, setCurrentDate] = useState(new Date());
 	const [includeExternalExpenses, setIncludeExternalExpenses] = useState(true);
+	const [includeTax, setIncludeTax] = useState(true);
 
     // -- Date Navigation Logic --
     const navigateDate = (direction) => {
@@ -1043,22 +1044,34 @@ const totalOtherExpenses = includeExternalExpenses
   ? totalOtherExpensesRaw
   : 0;
         
-        const netProfitBeforeTax = totalEarnings - estBusinessFuelCost - totalOtherExpenses;
-        const estimatedTax = netProfitBeforeTax > 0 ? netProfitBeforeTax * (settings.taxRate / 100) : 0;
-        const netProfitAfterTax = netProfitBeforeTax - estimatedTax;
+        const netProfitBeforeTax =
+  totalEarnings - estBusinessFuelCost - totalOtherExpenses;
+
+const estimatedTax =
+  netProfitBeforeTax > 0
+    ? netProfitBeforeTax * (settings.taxRate / 100)
+    : 0;
+
+const netProfitAfterTax = netProfitBeforeTax - estimatedTax;
+
+// Final profit depending on toggle
+const netFinal = includeTax
+  ? netProfitAfterTax
+  : netProfitBeforeTax;
         
         const actualFuelSpend = filteredData.fuel.reduce((acc, f) => acc + f.totalPrice, 0);
         const totalLitres = filteredData.fuel.reduce((acc, f) => acc + f.litres, 0);
         const hourlyRate = totalDuration > 0 ? totalEarnings / totalDuration : 0;
 
-        const profitPerKm = businessKm > 0 
-  ? netProfitAfterTax / businessKm 
-  : 0;
+        const profitPerKm =
+  businessKm > 0
+    ? netFinal / businessKm
+    : 0;
 
 return { 
   totalEarnings, 
   netProfitBeforeTax,
-  netProfitAfterTax,
+  netFinal,
   estimatedTax,
   estBusinessFuelCost, 
   estPersonalFuelCost, 
@@ -1125,6 +1138,24 @@ return {
   </h2>
 
   <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+  <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 shadow-sm mt-3">
+  <span className="text-sm text-slate-600">
+    Include Tax in Calculations
+  </span>
+
+  <button
+    onClick={() => setIncludeTax(prev => !prev)}
+    className={`w-12 h-6 flex items-center rounded-full p-1 transition-all ${
+      includeTax ? 'bg-indigo-600' : 'bg-slate-300'
+    }`}
+  >
+    <div
+      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-all ${
+        includeTax ? 'translate-x-6' : 'translate-x-0'
+      }`}
+    />
+  </button>
+</div>
     <span className="text-sm text-slate-600">
       Include External Expenses
     </span>
@@ -1169,7 +1200,7 @@ return {
   <Card className="p-4 bg-emerald-50 border-emerald-100">
     <p className="text-emerald-600 text-xs font-bold uppercase">Net (After Tax)</p>
     <p className="text-2xl font-bold text-emerald-800 mt-1">
-      {formatCurrency(periodMetrics.netProfitAfterTax)}
+      {formatCurrency(periodMetrics.netFinal)}
     </p>
   </Card>
 
@@ -1181,14 +1212,31 @@ return {
   </Card>
 
   <Card className="p-4 bg-blue-50 border-blue-100 col-span-2">
-    <p className="text-blue-600 text-xs font-bold uppercase">Profit Per KM</p>
-    <p className="text-2xl font-bold text-blue-800 mt-1">
-      {formatCurrency(periodMetrics.profitPerKm)} / km
-    </p>
-    <p className="text-xs text-blue-600/70 mt-1">
-      Based on {periodMetrics.businessKm.toFixed(0)} business km
-    </p>
-  </Card>
+  <div className="flex justify-between items-start">
+    <div>
+      <p className="text-blue-600 text-xs font-bold uppercase">
+        Profit Per KM
+      </p>
+      <p className="text-2xl font-bold text-blue-800 mt-1">
+        {formatCurrency(periodMetrics.profitPerKm)} / km
+      </p>
+      <p className="text-xs text-blue-600/70 mt-1">
+        Based on {periodMetrics.businessKm.toFixed(0)} business km
+      </p>
+    </div>
+
+    {!includeTax && (
+      <div className="text-right">
+        <p className="text-xs text-slate-500 uppercase font-semibold">
+          Est. Tax
+        </p>
+        <p className="text-sm font-bold text-red-500 mt-1">
+          {formatCurrency(periodMetrics.estimatedTax)}
+        </p>
+      </div>
+    )}
+  </div>
+</Card>
 </div>
 
         {/* Financial Breakdown */}
