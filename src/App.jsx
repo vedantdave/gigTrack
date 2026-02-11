@@ -5,10 +5,7 @@ import {
   DollarSign, 
   BarChart3, 
   Plus, 
-  Save, 
-  Trash2, 
   Edit2,
-  TrendingUp, 
   Calendar,
   Gauge,
   Droplet,
@@ -24,22 +21,21 @@ import {
   Receipt,
   Settings,
   Target,
-  PiggyBank
+  PiggyBank,
+  Trash2
 } from 'lucide-react';
 import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
   BarChart, 
   Bar, 
   PieChart, 
   Pie, 
   Cell,
-  Legend
+  Legend,
+  Tooltip, 
+  ResponsiveContainer, 
+  CartesianGrid, 
+  XAxis, 
+  YAxis 
 } from 'recharts';
 
 // --- Utility Components ---
@@ -307,7 +303,7 @@ export default function App() {
 
     if (isEditing) {
       return (
-        <div className="p-4 max-w-lg mx-auto">
+        <div className="p-4 max-w-lg mx-auto h-full overflow-y-auto pb-24">
           <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
             <Car className="text-blue-600" /> Car Profile
           </h2>
@@ -358,7 +354,7 @@ export default function App() {
     }
 
     return (
-      <div className="p-4 max-w-lg mx-auto space-y-4">
+      <div className="p-4 max-w-lg mx-auto space-y-4 h-full overflow-y-auto pb-24">
         <Card className="p-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white">
           <div className="flex justify-between items-start">
             <div>
@@ -886,9 +882,17 @@ export default function App() {
       setCurrentDate(newDate);
     };
 
+    // Helper: Parse YYYY-MM-DD string to local Date object (midnight)
+    const parseLocalDate = (dateStr) => {
+        if (!dateStr) return null;
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    };
+
     const getDateRange = () => {
-      const start = new Date(currentDate);
-      const end = new Date(currentDate);
+      const now = new Date(currentDate);
+      const start = new Date(now);
+      const end = new Date(now);
       
       if (viewMode === 'day') {
         start.setHours(0,0,0,0);
@@ -898,18 +902,20 @@ export default function App() {
         const diff = start.getDate() - day + (day === 0 ? -6 : 1);
         start.setDate(diff);
         start.setHours(0,0,0,0);
+        
         end.setDate(start.getDate() + 6);
         end.setHours(23,59,59,999);
       } else if (viewMode === 'month') {
         start.setDate(1);
         start.setHours(0,0,0,0);
-        end.setMonth(start.getMonth() + 1);
-        end.setDate(0);
+        
+        end.setFullYear(start.getFullYear(), start.getMonth() + 1, 0);
         end.setHours(23,59,59,999);
       } else if (viewMode === 'year') {
         start.setMonth(0, 1);
         start.setHours(0,0,0,0);
-        end.setMonth(11, 31);
+        
+        end.setFullYear(start.getFullYear(), 11, 31);
         end.setHours(23,59,59,999);
       }
       return { start, end };
@@ -930,17 +936,17 @@ export default function App() {
       const { start, end } = getDateRange();
       
       const trips = tripLogs.filter(t => {
-        const d = new Date(t.date);
+        const d = parseLocalDate(t.date);
         return d >= start && d <= end;
       });
       
       const fuel = fuelLogs.filter(f => {
-        const d = new Date(f.date);
+        const d = parseLocalDate(f.date);
         return d >= start && d <= end;
       });
 
       const expenses = expenseLogs.filter(e => {
-        const d = new Date(e.date);
+        const d = parseLocalDate(e.date);
         return d >= start && d <= end;
       });
 
@@ -1020,13 +1026,14 @@ export default function App() {
 
     const costBreakdownData = [
         { name: 'Bus. Fuel', value: periodMetrics.estBusinessFuelCost, fill: '#ef4444' },
+        { name: 'Pers. Fuel', value: periodMetrics.estPersonalFuelCost, fill: '#94a3b8' },
         { name: 'Expenses', value: periodMetrics.totalOtherExpenses, fill: '#f59e0b' },
         { name: 'Est. Tax', value: periodMetrics.estimatedTax, fill: '#d946ef' },
         { name: 'Net Profit', value: periodMetrics.netProfitAfterTax, fill: '#10b981' },
     ];
 
     return (
-      <div className="p-4 max-w-lg mx-auto pb-24">
+      <div className="p-4 max-w-lg mx-auto pb-24 h-full overflow-y-auto">
         <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
           <BarChart3 className="text-indigo-600" /> Analytics
         </h2>
@@ -1075,7 +1082,7 @@ export default function App() {
                  <DollarSign size={16} className="text-emerald-500" /> Financial Overview
              </h3>
              
-             {periodMetrics.totalEarnings > 0 || periodMetrics.totalOtherExpenses > 0 ? (
+             {periodMetrics.totalEarnings > 0 || periodMetrics.totalOtherExpenses > 0 || periodMetrics.estPersonalFuelCost > 0 ? (
                  <Card className="p-4">
                     <div className="h-48 w-full">
                         <ResponsiveContainer width="100%" height="100%">
