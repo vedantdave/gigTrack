@@ -1197,47 +1197,35 @@ return {
 
         {/* Top Cards */}
         <div className="grid grid-cols-2 gap-4 mb-6">
+
+  {/* Gross Earnings */}
+  <Card className="p-4 bg-slate-50 border-slate-200">
+    <p className="text-slate-600 text-xs font-bold uppercase">
+      Gross Earnings
+    </p>
+    <p className="text-2xl font-bold text-slate-900 mt-1">
+      {formatCurrency(periodMetrics.totalEarnings)}
+    </p>
+  </Card>
+
+  {/* Net After Fuel & Expenses */}
   <Card className="p-4 bg-emerald-50 border-emerald-100">
-    <p className="text-emerald-600 text-xs font-bold uppercase">Net (After Tax)</p>
+    <p className="text-emerald-600 text-xs font-bold uppercase">
+      Net (After Fuel & Expenses)
+    </p>
     <p className="text-2xl font-bold text-emerald-800 mt-1">
       {formatCurrency(periodMetrics.netFinal)}
     </p>
-  </Card>
 
-  <Card className="p-4 bg-purple-50 border-purple-100">
-    <p className="text-purple-600 text-xs font-bold uppercase">Hourly Rate</p>
-    <p className="text-2xl font-bold text-purple-800 mt-1">
-      {formatCurrency(periodMetrics.hourlyRate)}/hr
-    </p>
-  </Card>
-
-  <Card className="p-4 bg-blue-50 border-blue-100 col-span-2">
-  <div className="flex justify-between items-start">
-    <div>
-      <p className="text-blue-600 text-xs font-bold uppercase">
-        Profit Per KM
+    {!includeTax && periodMetrics.estimatedTax > 0 && (
+      <p className="text-[11px] text-red-500 mt-1">
+        Est. Tax: {formatCurrency(periodMetrics.estimatedTax)}
       </p>
-      <p className="text-2xl font-bold text-blue-800 mt-1">
-        {formatCurrency(periodMetrics.profitPerKm)} / km
-      </p>
-      <p className="text-xs text-blue-600/70 mt-1">
-        Based on {periodMetrics.businessKm.toFixed(0)} business km
-      </p>
-    </div>
-
-    {!includeTax && (
-      <div className="text-right">
-        <p className="text-xs text-slate-500 uppercase font-semibold">
-          Est. Tax
-        </p>
-        <p className="text-sm font-bold text-red-500 mt-1">
-          {formatCurrency(periodMetrics.estimatedTax)}
-        </p>
-      </div>
     )}
-  </div>
-</Card>
+  </Card>
+
 </div>
+
 
         {/* Financial Breakdown */}
         <div className="mb-6">
