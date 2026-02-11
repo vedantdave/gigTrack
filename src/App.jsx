@@ -940,6 +940,7 @@ return {
     const [currentDate, setCurrentDate] = useState(new Date());
 	const [includeExternalExpenses, setIncludeExternalExpenses] = useState(true);
 	const [includeTax, setIncludeTax] = useState(true);
+	const [includePersonalFuel, setIncludePersonalFuel] = useState(true);
 
     // -- Date Navigation Logic --
     const navigateDate = (direction) => {
@@ -1044,8 +1045,12 @@ const totalOtherExpenses = includeExternalExpenses
   ? totalOtherExpensesRaw
   : 0;
         
-        const netProfitBeforeTax =
-  totalEarnings - estBusinessFuelCost - totalOtherExpenses;
+        const fuelCostToUse = includePersonalFuel
+  ? estBusinessFuelCost + estPersonalFuelCost
+  : estBusinessFuelCost;
+
+const netProfitBeforeTax =
+  totalEarnings - fuelCostToUse - totalOtherExpenses;
 
 const estimatedTax =
   netProfitBeforeTax > 0
@@ -1088,7 +1093,9 @@ return {
   filteredData,
   globalMetrics.avgCostPerKm,
   settings.taxRate,
-  includeExternalExpenses
+  includeExternalExpenses,
+  includeTax,
+  includePersonalFuel
 ]);
 
     // -- Chart Data --
@@ -1152,6 +1159,24 @@ return {
     <div
       className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-all ${
         includeTax ? 'translate-x-6' : 'translate-x-0'
+      }`}
+    />
+  </button>
+</div>
+<div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 shadow-sm mt-3">
+  <span className="text-sm text-slate-600">
+    Include Personal Fuel
+  </span>
+
+  <button
+    onClick={() => setIncludePersonalFuel(prev => !prev)}
+    className={`w-12 h-6 flex items-center rounded-full p-1 transition-all ${
+      includePersonalFuel ? 'bg-indigo-600' : 'bg-slate-300'
+    }`}
+  >
+    <div
+      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-all ${
+        includePersonalFuel ? 'translate-x-6' : 'translate-x-0'
       }`}
     />
   </button>
@@ -1252,7 +1277,12 @@ return {
                     </div>
                     <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between text-xs text-slate-500">
                        <span>Revenue: <span className="font-semibold text-slate-800">{formatCurrency(periodMetrics.totalEarnings)}</span></span>
-                       <span>Costs+Tax: <span className="font-semibold text-red-600">{formatCurrency(periodMetrics.estBusinessFuelCost + periodMetrics.totalOtherExpenses + periodMetrics.estimatedTax)}</span></span>
+                       <span>Costs+Tax: <span className="font-semibold text-red-600">{formatCurrency(
+  (includePersonalFuel
+    ? periodMetrics.estBusinessFuelCost + periodMetrics.estPersonalFuelCost
+    : periodMetrics.estBusinessFuelCost)
+  + periodMetrics.totalOtherExpenses
+  + (includeTax ? periodMetrics.estimatedTax : 0)}</span></span>
                     </div>
                  </Card>
              ) : (
